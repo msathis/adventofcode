@@ -1,7 +1,7 @@
 extern crate advent;
 
-use advent::day1;
+use advent::day2;
 
 fn main() {
-    day1::run_2();
+    day2::run_1();
 }
