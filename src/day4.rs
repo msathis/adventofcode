@@ -5,14 +5,14 @@ use regex::Regex;
 use std::cmp;
 
 #[derive(Ord, PartialEq, PartialOrd, Eq, Debug)]
-enum Action {
+pub enum Action {
     BEGIN(i32),
     SLEEP,
     WAKEUP,
 }
 
 #[derive(Ord, PartialOrd, PartialEq, Eq, Debug)]
-struct GuardLog {
+pub struct GuardLog {
     year: i32,
     month: i32,
     date: i32,
@@ -22,12 +22,56 @@ struct GuardLog {
 }
 
 pub fn run_1() {
+    let mut buffer = String::new();
+    stdin().read_to_string(&mut buffer);
+    let logs = parse(&buffer);
+    let (matrix_map, total_map) = get_max_guard(&logs);
+
+    let mut max_guard = -1;
+    let mut max_value = -1;
+    total_map.iter().for_each(|(i, v)| {
+        max_value = cmp::max(max_value, *v);
+        if max_value == *v {
+            max_guard = *i;
+        }
+    });
+
+    let mut max_mins = -1;
+    let mut max_mins_val = -1;
+    matrix_map.iter().filter(|&(&(g, v), _)| g == max_guard).for_each(|(&(g, v), val)| {
+        if max_mins_val < *val {
+            max_mins_val = *val;
+            max_mins = v;
+        }
+    });
+
+    println!("{}", max_guard * max_mins);
+}
+
+pub fn run_2() {
+    let mut buffer = String::new();
+    stdin().read_to_string(&mut buffer);
+    let logs = parse(&buffer);
+    let (matrix_map, total_map) = get_max_guard(&logs);
+
+    let mut max_mins = -1;
+    let mut max_mins_val = -1;
+    let mut max_guard = -1;
+    matrix_map.iter().for_each(|(&(g, v), val)| {
+        if max_mins_val < *val {
+            max_mins_val = *val;
+            max_mins = v;
+            max_guard = g;
+        }
+    });
+
+    println!("{}", max_guard * max_mins);
+}
+
+pub fn parse(buffer: &String) -> Vec<GuardLog> {
     let line_re = Regex::new(r"(?m)^\[(\d+)\-(\d+)\-(\d+) (\d+):(\d+)\] (.+)$").unwrap();
     let guard_re = Regex::new(r"^(.+)#(\d+)(.+)").unwrap();
     let mut logs = vec![];
-
-    let mut buffer = String::new();
-    stdin().read_to_string(&mut buffer);
 
     for line in buffer.lines() {
         let log_matches = line_re.captures(line).unwrap();
@@ -50,10 +94,10 @@ pub fn run_1() {
         });
     }
     logs.sort();
-    get_max_guard(&logs);
+    logs
 }
 
-fn get_max_guard(logs: &Vec<GuardLog>) {
+fn get_max_guard(logs: &Vec<GuardLog>) -> (HashMap<(i32, i32), i32>, HashMap<i32, i32>) {
     let mut matrix_map = HashMap::new();
     let mut total_map = HashMap::new();
     let mut prev_guard = -1;
@@ -82,23 +126,5 @@ fn get_max_guard(logs: &Vec<GuardLog>) {
         }
     }
 
-    let mut max_guard = -1;
-    let mut max_value = -1;
-    total_map.iter().for_each(|(i, v)| {
-        max_value = cmp::max(max_value, *v);
-        if max_value == *v {
-            max_guard = *i;
-        }
-    });
-
-    let mut max_mins = -1;
-    let mut max_mins_val = -1;
-    matrix_map.iter().filter(|&(&(g, v), _)| g == max_guard).for_each(|(&(g, v), val)| {
-        if max_mins_val < *val {
-            max_mins_val = *val;
-            max_mins = v;
-        }
-    });
-
-    println!("{}", max_guard * max_mins);
+    (matrix_map, total_map)
 }
